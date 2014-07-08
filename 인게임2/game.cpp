@@ -8,6 +8,7 @@
 
 
 in_game::in_game()
+:update_dt(200), insert_dt(0), r_clickup(false), attack_choice(false), hold_choice(false)
 {
 
 	
@@ -31,7 +32,7 @@ void in_game::draw(HDC hdc){
 	if (hBitmap == NULL) return;
 	::GetCursorPos(&ptMouse);
 	ptMouse = ptMouse.ToClient(hOwner);
-	Rect inform_box = Rect(ptMouse.x , ptMouse.y , ptMouse.x +80, ptMouse.y + 80);
+	Rect inform_box = Rect(ptMouse.x, ptMouse.y, ptMouse.x + 80, ptMouse.y + 80);
 
 
 	::GetCursorPos(&inform_Mouse);
@@ -44,30 +45,111 @@ void in_game::draw(HDC hdc){
 	HBITMAP hOld = ::Select(hBitmapDC, hBitmap);
 
 	//그냥 ui 배경
-	::StretchBlt(hdc, rcDest.left, rcDest.top,
+	::GdiTransparentBlt(hdc, rcDest.left, rcDest.top,
 		rcDest.width(), rcDest.height(),
 		hBitmapDC,
-		rcSrc.left, rcSrc.top, rcSrc.width(), rcSrc.height(), SRCCOPY);
+		rcSrc.left, rcSrc.top, rcSrc.width(), rcSrc.height(), RGB(0,0,0));
 
-	std::map<int, character_inform*>::iterator it;
+	//::StretchBlt(hdc, rcDest.left, rcDest.top,
+	//	rcDest.width(), rcDest.height(),
+	//	hBitmapDC,
+	//	rcSrc.left, rcSrc.top, rcSrc.width(), rcSrc.height(), SRCCOPY);
 
-	for (it = manager_depot->begin(); it->first != 10; it++){
+	std::map<int, character_inform*>::iterator it, jt, tt;
 
 
-		if (::PtInRect(&click_rc, it->second->GetPosition())){
+	int arr[20];
+	
+	for (it = manager_depot->begin(); it != manager_depot->end(); it++)
+	{
+		if (it->second->get_team() == 3){
 
-			find_key = it->first;
+		}
+		else{
+			int count = 0;
+			for (jt = manager_depot->begin(); jt != manager_depot->end(); jt++)
+			{
+				if (it == jt) //같으면 비교안함
+				{
+				}
+				else //다를때
+				{
 
-			character_inform_box = it->second; //케릭터정보를 받아오고
+					if (it->second->get_team() != 3 && jt->second->get_team() != 3) //둘다 멤버가 후보가아닐때
+					{
 
-			test1 = it->second->get_drag_select();
+						if (it->second->GetPosition().y > jt->second->GetPosition().y) // 비교해서 내가크면 count증가
+						{
+							count++;
+						} //비교끝나고
+					}//멤버끝나고
+				}//다른거끝나고
 
-			
+			}//jt가 끝나고
+
+			arr[count] = it->first;
 		}
 
-		it->second->Draw(hdc);
-
 	}
+	
+	for (int i = 0; i< 20; i++)
+	{
+		if(manager_depot->find(arr[i])->second->get_CHP() > 0)
+		manager_depot->find(arr[i])->second->Draw(hdc);
+	}
+
+
+		//count = 0;
+		//if (::PtInRect(&click_rc, it->second->GetPosition())){
+
+
+		//	
+		//	find_key = it->first;
+
+		//	character_inform_box = it->second; //케릭터정보를 받아오고
+
+		//	test1 = it->second->get_drag_select();
+
+		//}
+		/*for (jt = manager_depot->begin(); jt != manager_depot->end(); jt++){
+			if (it->second->get_team() != 3 && jt->second->get_team() != 3){
+
+				if (it->second->get_CHP() > 0){
+					it->second->Draw(hdc);
+				}
+				
+				if (it == jt){
+
+				}
+
+				else if (it->second->GetPosition().y > jt->second->GetPosition().y){
+					count++;
+				}
+
+
+
+			}
+
+			
+
+		}*/
+
+		
+
+	/*for (int i = 0; i < 20; i++){
+		int a = arr[i];
+		
+		if (manager_depot->find(a)->second->get_CHP() > 0  && manager_depot->find(a)->second->get_team() != 3){
+			manager_depot->find(a)->second->Draw(hdc);
+		}
+
+	}*/
+
+
+	//////////////////////////////////////////////////
+
+
+
 
 	if (drag_loading)
 	{
@@ -110,12 +192,49 @@ void in_game::draw(HDC hdc){
 	//////////////
 	
 
+	for (it = manager_depot->begin(); it != manager_depot->end(); it++)
+	{
+
+		if (it->second->get_team() == 2){
+			it->second->set_drag_select(true);
+		}
+
+		if (it->second->get_team() != 3){
+
+			if (it->second->get_drag_select()){
+
+				if (it->second->get_CHP() > 0){
+					COLORREF color;
+
+					if (it->second->get_team() == 2){
+						color = RGB(255, 0, 0);
+					}
+					else{
+						color = RGB(0, 255, 0);
+
+					}
+
+
+					::Rectangle(hdc, it->second->GetPosition().x - 16, it->second->GetPosition().y - 30, it->second->GetPosition().x + 16, it->second->GetPosition().y - 35);
+					HBRUSH hBrush = ::CreateSolidBrush(color);
+					HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, hBrush);
+
+					::Rectangle(hdc, it->second->GetPosition().x - 16, it->second->GetPosition().y - 30, it->second->GetPosition().x - 16 + (2 * 16) * (it->second->get_CHP()) / it->second->get_HP(), it->second->GetPosition().y - 35);
+
+					::SelectObject(hdc, hOldBrush);
+					::DeleteObject(hBrush);
+				}
+				
+			}
+
+		}
+	}
 
 
 	//걍노가다 확인용
 	std::wostringstream oss;
 	
-	oss << _T("it first : ") << find_key << std::endl << _T("drag: ") << test1 << std::endl << _T("col :") << test2;
+	oss << _T("it first : ") << manager_depot->find(0)->second->get_attack_dt() << std::endl << _T("drag: ") << test1 << std::endl << _T("col :") << test2;
 		
 	::DrawText(hdc, oss.str().c_str(), -1, &inform_box, DT_TOP);
 
@@ -138,22 +257,49 @@ void in_game::Input(DWORD tick){
 	ptMouse = ptMouse.ToClient(hOwner);
 
 
+	if (attack_choice && (::GetAsyncKeyState(VK_LBUTTON) & 0x8000))
+	{
+
+		::GetCursorPos(&ptDest);
+		ptDest = ptDest.ToClient(hOwner);
+
+		DestBox = Rect(ptDest, Size(20, 20));
+
+		std::map<int, character_inform*>::iterator it;
+
+		for (it = manager_depot->begin(); it->first != 10; it++){
+			if (it->second->get_drag_select())
+			{
+
+				it->second->set_attack_state(true);
+				it->second->set_hold_state(false);
+
+
+				it->second->SetDestination(Vector(rand() % DestBox.width() + DestBox.left,
+					rand() % DestBox.height() + DestBox.top));
+			}
+		}
+
+	}
+
 
 	// 누르고
 	if (!drag_loading && ::GetAsyncKeyState(VK_LBUTTON) & 0x8000)
 	{
 
+
 		::GetCursorPos(&drag_start); // 사각형 첫번째 부분 left + top
 		drag_start = drag_start.ToClient(hOwner); // 창안에 좌표로 바꿈
 		drag_end = drag_start;
 		drag_loading = true; // 드래그 시작 true
+		attack_choice = false;
 
 		std::map<int, character_inform*>::iterator it;
 
 		for (it = manager_depot->begin(); it->first != 10; it++){
 
 			it->second->set_drag_select(false);
-		
+
 
 		}
 
@@ -161,9 +307,10 @@ void in_game::Input(DWORD tick){
 
 
 	// 누르는 도중이면 사각형 right bottom 값을 현재 마우스좌표값으로 계속바까줌
-	if (drag_loading && (::GetAsyncKeyState(VK_LBUTTON) & 0x8000) == 0x8000)
+	if (drag_loading  && (::GetAsyncKeyState(VK_LBUTTON) & 0x8000) == 0x8000)
 	{
 
+		
 		::GetCursorPos(&drag_end);  // temp 용 마우스 좌표
 		drag_end = drag_end.ToClient(hOwner); // 시작점은 그대로고  temp용 좌표를 사각형 right bottom 으로 계속입력
 
@@ -199,20 +346,52 @@ void in_game::Input(DWORD tick){
 
 			if (::PtInRect(&rcBox, it->second->GetPosition())){
 
+
 				it->second->set_drag_select(true);
-				
+
+
 			}
 			else{
-	
+
 				it->second->set_drag_select(false);
-			
+
 			}
 			//}
-
-
-
 		}
 	}
+
+
+
+	if (::GetAsyncKeyState(0x41) & 0x8000){
+
+		attack_choice = true;
+
+	}
+
+
+
+	
+
+	if (::GetAsyncKeyState(0x48) & 0x8000){
+
+		std::map<int, character_inform*>::iterator it;
+
+		for (it = manager_depot->begin(); it->first != 10; it++){
+			if (it->second->get_drag_select())
+			{
+
+				it->second->set_attack_state(false);
+				it->second->set_hold_state(true);
+
+
+				it->second->SetDestination(Vector(rand() % DestBox.width() + DestBox.left,
+					rand() % DestBox.height() + DestBox.top));
+			}
+		}
+
+	}
+
+
 
 	// 드래그 사각형 없애는 부분
 	if (drag_loading && (::GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0x8000)
@@ -222,97 +401,290 @@ void in_game::Input(DWORD tick){
 	}
 
 
-	if ((::GetAsyncKeyState(VK_RBUTTON) & 0x8000) == 0x8000)
-	{
-		::GetCursorPos(&ptDest);
-		ptDest = ptDest.ToClient(hOwner);
 
-		DestBox = Rect(ptDest, Size(20, 20));
 
-		std::map<int, character_inform*>::iterator it;
+	if ((::GetAsyncKeyState(VK_RBUTTON) & 0x8000) == 0x8000){
 
-		for (it = manager_depot->begin(); it->first != 10; it++){
-			if (it->second->get_drag_select())
-			{
-				it->second->SetDestination(Vector(rand() % DestBox.width() + DestBox.left,
-					rand() % DestBox.height() + DestBox.top));
-			}
-		}
+		r_clickup = true;
+
 	}
-}
 
+
+	if (r_clickup &&(::GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0x8000)
+	{
+		r_clickup = false;
+		
+			::GetCursorPos(&ptDest);
+			ptDest = ptDest.ToClient(hOwner);
+
+			DestBox = Rect(ptDest, Size(20, 20));
+
+			std::map<int, character_inform*>::iterator it;
+
+			for (it = manager_depot->begin(); it->first != 10; it++){
+				if (it->second->get_drag_select())
+				{
+					it->second->set_attack_state(false);
+					it->second->set_hold_state(false);
+
+					it->second->SetDestination(Vector(rand() % DestBox.width() + DestBox.left,
+						rand() % DestBox.height() + DestBox.top));
+				}
+			}
+
+	}
+
+}
 
 
 void in_game::Update(DWORD tick){
 
-
 	std::map<int, character_inform*>::iterator it, jt;
+#define my it->second
+#define	target jt->second
+
+	insert_dt = tick;
+	update_dt = 300;
 
 
-	for (it = manager_depot->begin(); it->first != 10; it++){
-		it->second->Update(tick);
-	}
+	for (it = manager_depot->begin(); it != manager_depot->end(); it++){
 
-
-	for (it = manager_depot->begin(); it->first != 10; it++)
-	{
-		for (jt = it, jt++; jt->first != 10; jt++){
-
-			
-
-
-			Rect myRect;
-			myRect = Rect(it->second->GetPosition().x - 16, it->second->GetPosition().y - 16, it->second->GetPosition().x + 16, it->second->GetPosition().y + 16);
-
-			Rect targetRect;
-			targetRect = Rect(
-			jt->second->GetPosition().x - 16, jt->second->GetPosition().y - 16,
-			jt->second->GetPosition().x + 16, jt->second->GetPosition().y + 16);
-
-
-			if (myRect.left < targetRect.right){
-				if (::PtInRect(&myRect, Point(jt->second->GetPosition().x + 16, jt->second->GetPosition().y))){
-					// 오른쪽 박스에 왼쪽박스가 오른쪽으로 와서 충돌했을때 ㅁ >> |ㅁ|
-
-					jt->second->SetPosition(Vector(jt->second->GetPosition().x - jt->second->GetDirection().x, jt->second->GetPosition().y ));
-
-				}
-				if (::PtInRect(&targetRect, Point(it->second->GetPosition().x - 16, it->second->GetPosition().y))){
-					//왼쪽에 위치한 myRect박스에 오른쪽 target박스가 <<왼쪽으로 와서 충돌했을때 |ㅁ| << ㅁ
-					
-					it->second->SetPosition(Vector(jt->second->GetPosition().x - it->second->GetDirection().x, jt->second->GetPosition().y));
-
-
-				}
-				
-
-
-			
-
-				//}
-				//	
-				//	
-				//if (!(myRect.right < targetRect.left)){
-
-				//}
-
-				//
-				//if (!(myRect.top > targetRect.bottom)){
-
-				//}
-				//		
-				//if (!(myRect.bottom < targetRect.top)){
-				//
-				//
-				//}
-
-
-
-			}
+		if (it->second->get_team() != 3){
+			it->second->set_ipdt(insert_dt);
+			it->second->set_attack_dt(insert_dt);
+			it->second->Update(tick);
 		}
+
+
 	}
 
+
+	for (it = manager_depot->begin(); it != manager_depot->end(); it++)
+	{//포문시작
+		for (jt = manager_depot->begin(); jt != manager_depot->end(); jt++){
+
+			if (it->second->get_team() != 3 && jt->second->get_team() != 3){
+
+				if (it != jt){
+
+
+					if (it->second->get_CHP() > 0){ //살아있는지 먼저 체크
+						int radius = 12;
+						Rect myRect; // 케릭터 
+						Rect myRangeRect; // 케릭터 공격범위
+						myRect = Rect(my->GetPosition().x - radius, my->GetPosition().y - radius, my->GetPosition().x + radius, my->GetPosition().y + radius);
+						myRangeRect = Rect(my->GetPosition().x - 120, my->GetPosition().y - 120, my->GetPosition().x + 120, my->GetPosition().y + 120);
+
+
+
+						Rect targetRect; // 적케릭터
+						targetRect = Rect(
+							target->GetPosition().x - radius, target->GetPosition().y - radius,
+							target->GetPosition().x + radius, target->GetPosition().y + radius);
+
+						Rect targetRangeRect; //적케릭터범위
+						targetRangeRect = Rect(
+							target->GetPosition().x - 80, target->GetPosition().y - 80,
+							target->GetPosition().x + 80, target->GetPosition().y + 80);
+
+
+						Rect fc;
+						//공격하는곳
+						fc = Rect(my->GetPosition().x + (my->GetDirection().x * 10) - 16,
+							my->GetPosition().y + (my->GetDirection().y * 10) - 16,
+							my->GetPosition().x + (my->GetDirection().x * 10) + 16,
+							my->GetPosition().y + (my->GetDirection().y * 10) + 16);
+
+
+
+						if (::PtInRect(&myRangeRect, target->GetPosition())){//공격범위 조사
+							if (my->get_attack_state()){
+								if (my->get_team() != target->get_team() && update_dt < my->get_indt() && my->get_CHP() > 0 && target->get_CHP() > 0){
+
+
+									my->reset_indt();
+									my->SetDestination(target->GetPosition());
+								}
+
+
+
+								if (::PtInRect(&fc, target->GetPosition())){
+
+									if (my->get_CHP() > 0 && target->get_CHP() > 0){
+
+										if (my->get_team() != target->get_team()){
+
+											if (update_dt < my->get_attack_dt()){
+												my->reset_atdt();
+												target->health(it->second->get_ATK());
+
+
+											}
+										}
+
+										Vector temp;
+
+										temp = my->GetDestination();
+
+										my->SetPosition((Vector(my->GetPosition().x - (my->GetDirection().x * 3),
+											my->GetPosition().y - (my->GetDirection().y * 3))));
+
+									}
+
+								}
+
+
+								if (::PtInRect(&targetRect, my->GetPosition())){ // 케릭터가 겹쳤을때 랜덤좌표를 주고 빼냄
+									if (my->get_CHP() > 0 && target->get_CHP() > 0){
+										my->SetPosition(Vector(my->GetPosition().x - (rand() % 25 - 15), my->GetPosition().y - (rand() % 25 - 15)));
+									}
+								}
+
+							}
+
+							if (my->get_hold_state()){
+
+
+
+
+							}
+
+							if (my->get_hold_state() == false && my->get_attack_state() == false){
+
+								if (::PtInRect(&myRect, target->GetPosition())){
+
+									if (my->get_CHP() > 0 && target->get_CHP() > 0){
+										my->SetPosition(Vector(my->GetPosition().x - (rand() % 25 - 15), my->GetPosition().y - (rand() % 25 - 15)));
+
+
+									}
+								}
+
+								if (::PtInRect(&targetRect, my->GetPosition())){ // 케릭터가 겹쳤을때 랜덤좌표를 주고 빼냄
+									if (my->get_CHP() > 0 && target->get_CHP() > 0){
+										my->SetPosition(Vector(my->GetPosition().x - (rand() % 25 - 15), my->GetPosition().y - (rand() % 25 - 15)));
+									}
+								}
+
+							}
+
+						}
+					}
+				}
+			}
+
+		} //jt 시작부분
+	
+	}      //충돌체크 첫포문
 }
+					// 다양한방법을 정해야한다
+
+					// a* 알고리즘을 사용할수없다면?
+
+					/* 이동하는 Rect가 있고 Rect가 다른Rect 즉 (target) 이라거정한다면 에 target 침범했다면 어떤방향이든간에
+					target렉트에서 빠져나올수있도록 어떻게든 빠져나가게 하는방법이다
+					즉 유닛이 뭉치긴하지만 이동이끝나고나면 서로 퍼지는경우
+
+
+					*/
+
+					/* 처음꺼랑비슷한데 이동하다가 렉트끼리 겹처버리면 그냥 서로 팅겨내는방법이다
+						그럼 전투를 어떻게할것인가의문제임..
+
+						*/
+
+					/*
+					다른방법은 내가가려는길에 Rect를 하나만들고 이동하면서 Rect가 겹치는지 체크한다
+					RecT가 겹쳐서 타겟의 징표(아군 적군 ) 등을 확인하고 아군일 경우 벡터의 이동방향을 잠시바꾼다
+
+
+					*/
+
+
+			//가는방향을 검색해보고 있으면 멈춰야지 더하면안되니까
+		
+
+				///////////myRect  right       <<<>>>>    targetRect  left//////////
+				//if (myRect.right + my->GetDirection().x < targetRect.left){
+
+				//	my->set_collision(true);
+				//	my->SetPosition(Vector(my->GetPosition().x - my->GetDirection().x, my->GetPosition().y));
+				//	my->SetDestination(my->GetPosition());
+				//	my->SetDirection(Vector());
+
+
+				//}
+
+				///////////targetRect  right       <<<>>>>   myRect left//////////
+
+				//else if (targetRect.right > myRect.left + my->GetDirection().x){
+
+				//	my->set_collision(true);
+				//	my->SetDestination(my->GetPosition());
+				//	my->SetDirection(Vector());
+
+				//}
+
+				///////////////
+				///////  my 
+				////////bottom
+				//////////상하
+				/////////////////
+				////// top
+				//////target/////
+				/////////////
+
+				//else if (myRect.bottom + my->GetDirection().y > targetRect.top){
+
+				//	my->set_collision(true);
+				//	my->SetDestination(my->GetPosition());
+				//	my->SetDirection(Vector());
+
+				//}
+
+				///////////////
+				///////  target
+				////////bottom
+				//////////상하
+				/////////////////
+				////// top
+				////// my/////
+				/////////////
+
+				//else if (myRect.top + my->GetDirection().y > targetRect.bottom){
+
+				//	my->set_collision(true);
+				//	my->SetDestination(my->GetPosition());
+				//	my->SetDirection(Vector());
+
+				//}
+
+				//else{
+
+				//	my->set_collision(false);
+
+				//}
+				//if (!(myRect.left > targetRect.right || myRect.right < targetRect.left ||
+				//	myRect.top > targetRect.bottom || myRect.bottom < targetRect.top)){
+
+				//	my->SetPosition(my->GetPosition() - my->GetDirection());
+				//	my->SetPosition(my->GetPosition() - my->GetDirection());
+				//	target->SetPosition(target->GetPosition() - target->GetDirection());
+
+				//	target->SetPosition(target->GetPosition() - target->GetDirection());
+
+				//	my->SetDirection(Vector());
+
+				//	target->SetDirection(Vector());
+
+				//	my->SetDestination(my->GetPosition());
+
+				//	target->SetDestination(target->GetPosition());
+
+
+
+				//}
+
 
 void in_game::Load_game_map(LPCTSTR szFileName){
 

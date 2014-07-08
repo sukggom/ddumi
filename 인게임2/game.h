@@ -4,6 +4,7 @@
 #include <map>
 #include <sstream> // wostringstream
 #include "character_inform_manager.h"
+#include "collision.h"
 
 #define manager_depot char_man_depot.get_depot()
 
@@ -52,7 +53,13 @@ private:
 
 
 	bool drag_loading;
+	bool r_clickup;
 
+	bool attack_choice;
+	bool hold_choice;
+
+	int update_dt;
+	int insert_dt;
 	
 
 	int test2;

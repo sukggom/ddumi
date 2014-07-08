@@ -31,8 +31,8 @@ INT WINAPI _tWinMain(HINSTANCE hInstance,
 		return 1;
 	}
 
-	int width = 800;
-	int height = 600;
+	int width = 1000;
+	int height = 800;
 
 	int cx = ::GetSystemMetrics(SM_CXSCREEN);
 	int cy = ::GetSystemMetrics(SM_CYSCREEN);
@@ -40,7 +40,7 @@ INT WINAPI _tWinMain(HINSTANCE hInstance,
 	int x = (cx - width)/2;
 	int y = (cy - height)/2;
 
-	DWORD dwStyle = WS_OVERLAPPEDWINDOW;
+	DWORD dwStyle = WS_POPUP;
 	dwStyle &= ~WS_MAXIMIZEBOX;
 	dwStyle &= ~WS_THICKFRAME;
 	//dwStyle = dwStyle & ~WS_MINIMIZEBOX;

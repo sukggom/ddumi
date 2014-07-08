@@ -18,6 +18,8 @@ enum Character_State_id
 #include "BaseType.h"
 #include "Animation.h"
 #include "Utility.hpp"
+#include <sstream>
+#include <fstream>
 
 
 
@@ -40,7 +42,7 @@ public:
 
 	//void SetImageName(LPCTSTR image_name);
 	void SetPositionLink(Point& p);
-	void SetPositionLink(Vector& vp , Vector& , Vector& ,bool&);
+	void SetPositionLink(Vector& vp , Vector& , Vector& ,bool& , int& spd, int& i,int& chp, bool& end,bool& attack,bool& hold);
 
 	void SetDestination(Vector& v);
 	void SetDirection(Vector& v);
@@ -48,10 +50,17 @@ public:
 
 protected:
 	//LPCTSTR image_name;
+	int* spd;
+	int* img;
+	int* chp;
+	bool* the_end;
 	Vector* vpos;
 	Vector* vDest;
 	Vector* direction;
 	bool collision;
+
+	bool* attack;
+	bool* hold;
 
 	
 	Point* pos;
@@ -66,6 +75,7 @@ class character_inform : public StateMachine
 {
 public:
 	character_inform();
+	character_inform(int i);
 	virtual~character_inform();
 
 
@@ -91,7 +101,7 @@ public:
 	void set_ATR(const int&);
 	void set_SPD(const int&);
 	void set_CLS(const int&);
-	void set_inform(const int& l, const int& h, const int& a, const int& d, const int& at, const int& s, const int& c);
+	void set_inform(const int& l, const int& h, const int& a, const int& d, const int& at, const int& s, const int& c, const int& i ,const int team);
 
 
 	int get_LV() const;
@@ -102,6 +112,7 @@ public:
 	int get_SPD() const;
 	int get_CLS() const;
 
+	int get_team() const;
 
 	///////////////////////////////////////////////////////////////////////////////////
 
@@ -125,14 +136,43 @@ public:
 
 	//충돌부분
 	bool iscollision(character_inform*) const;
-	void set_collision(const bool&);
+	void set_collision(const bool&); // 부딧치면 트루
+	bool get_collision() const;
+
+	//hp
+	void health(const int& attack);
+	int get_CHP() const;
+	void set_CHP();
+	bool get_end()const;
+
+
+
+
+	//시간체크용
+	int get_updt() const;
+	void set_updt(DWORD tick);
+	int get_indt() const;
+	void set_ipdt(DWORD tick);
+	void reset_indt();
+
+
+
+	void reset_atdt();
+	int get_attack_dt()const;
+	void set_attack_dt(DWORD tick);
+
+	//공격체크
+	bool get_attack_state()const; //홀드랑 어택은 상관관계
+	void set_attack_state(const bool& );
+	bool get_hold_state()const;
+	void set_hold_state(const bool&);
 
 private:
 
 	
 	//유저셋팅
-	int LV;
-
+	int LV; //
+	int exp;
 
 	//AI셋팅
 	
@@ -141,12 +181,22 @@ private:
 	int ATK;
 	int DEF;
 	int ATR;
-	int SPD;
-	int CLS;
 
+	/// 공격체크용
+	int SPD;
+	int updt;
+	int indt;
+	int atdt;
+
+
+
+
+	int CLS;
+	int CHP;
+	int team; //아군적군구분
 
 	//그림저장
-	LPCTSTR image_name;
+	int img;
 	
 
 	//상태부분
@@ -154,7 +204,9 @@ private:
 
 	bool state_inform_box_select; // 선택박스부분
 
-
+	bool attack_state; //홀드랑 어택은 상관관계
+	bool hold_state;
+	//둘다 false 면 걍 이동상태
 
 
 	////////////////이동부분/////////////
@@ -173,13 +225,17 @@ private:
 	////////////충돌부분////////////////////
 
 	bool collision;
+
+	//////////////죽는부분////////////
+	bool end;
+
 };
 
 
 class CS_SEE_UP : public CharacterState
 {
 public:
-	CS_SEE_UP();
+	CS_SEE_UP(int);
 	virtual ~CS_SEE_UP();
 
 	virtual void Enter();
@@ -193,7 +249,7 @@ public:
 class CS_SEE_LEFT : public CharacterState
 {
 public:
-	CS_SEE_LEFT();
+	CS_SEE_LEFT(int);
 	virtual ~CS_SEE_LEFT();
 
 	virtual void Enter();
@@ -208,7 +264,7 @@ public:
 class CS_SEE_RIGHT : public CharacterState
 {
 public:
-	CS_SEE_RIGHT();
+	CS_SEE_RIGHT(int);
 	virtual ~CS_SEE_RIGHT();
 
 	virtual void Enter();
@@ -224,7 +280,7 @@ public:
 class CS_SEE_DOWN : public CharacterState
 {
 public:
-	CS_SEE_DOWN();
+	CS_SEE_DOWN(int);
 	virtual ~CS_SEE_DOWN();
 
 	virtual void Enter();
@@ -242,7 +298,7 @@ public:
 class CS_ACTION : public CharacterState
 {
 public:
-	CS_ACTION();
+	CS_ACTION(int);
 	virtual ~CS_ACTION();
 
 	virtual void Enter();
@@ -257,7 +313,7 @@ public:
 class CS_DIE : public CharacterState
 {
 public:
-	CS_DIE();
+	CS_DIE(int);
 	virtual ~CS_DIE();
 
 	virtual void Enter();
@@ -266,12 +322,15 @@ public:
 	virtual void Draw(HDC hdc);
 	virtual void Leave();
 
+private:
+
+	DWORD die_count;
 };
 
 class CS_STATE : public CharacterState
 {
 public:
-	CS_STATE();
+	CS_STATE(int);
 	virtual ~CS_STATE();
 
 	virtual void Enter();

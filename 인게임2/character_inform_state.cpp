@@ -1,4 +1,5 @@
 #include "character_inform.h"
+#include <iomanip>
 
 /////////////////////////////////////////////////
 // CharacterState Impl
@@ -19,12 +20,18 @@ void CharacterState::SetPositionLink(Point& p)
 	pos = &p;
 }
 
-void CharacterState::SetPositionLink(Vector& vp , Vector& v , Vector& d , bool& col )
+void CharacterState::SetPositionLink(Vector& vp, Vector& v, Vector& d, bool& col, int& s, int& i, int & ch , bool& ed, bool& att, bool& hol)
 {
 	vpos = &vp;
 	vDest = &v;
 	direction = &d;
 	collision = &col;
+	spd = &s;
+	img = &i;
+	chp = &ch;
+	the_end = &ed;
+	attack = &att;
+	hold = &hol;
 }
 
 
@@ -43,21 +50,27 @@ void CharacterState::SetDirection(Vector& v)
 /////////////////////////////////////////////////
 // CS_SEE_UP Impl
 /////////////////////////////////////////////////
-CS_SEE_UP::CS_SEE_UP()
+CS_SEE_UP::CS_SEE_UP(int im)
 {
 
 	pAni = new Animation;
 	for (int i = 0; i < 2; i++)
 	{
+		
+
+		std::wostringstream oss;
+		oss << std::setw(2) << std::setfill(L'0') << im  << _T(".bmp");
+
+	
 
 		Image* pImg = new Image;      // enum 자기숫자 (UP은 0)   
-		pImg->Load(_T("001.bmp"), Rect(32 * i, 32 * SEE_UP, 32 + 32 * i, 32 + 32 * SEE_UP));
+		pImg->Load(oss.str().c_str() , Rect(32 * i, 32 * SEE_UP, 32 + 32 * i, 32 + 32 * SEE_UP));
 		pImg->SetTransparent(RGB(0, 0, 0));
 
 		pAni->AddShot(pImg);
 	}
 	pAni->SetLoop(true);
-	pAni->SetDelay(60);
+	pAni->SetDelay(100);
 }
 CS_SEE_UP::~CS_SEE_UP()
 {
@@ -78,13 +91,23 @@ void CS_SEE_UP::Update(DWORD tick)
 	if (pAni)
 		pAni->Update(tick);
 
+	if (chp <= 0){
+		m_pMachine->transition(SEE_DIE);
+
+	}
+
 	Vector diff = *vpos - *vDest;
 
-	if (diff == Vector())
+	if (diff == Vector()){
+		*direction = Vector();
+		*attack = true;
+		*hold = false;
 		return;
 
+	}
+
 	*direction = *vDest - *vpos;
-	*direction = direction->normalize() * 2;
+	*direction = direction->normalize() * (*spd);
 
 	//y증가값이 가장큼 
 	if (abs(direction->x) >= abs(direction->y)){
@@ -107,8 +130,9 @@ void CS_SEE_UP::Update(DWORD tick)
 
 		}
 		else{
-
-			*vpos = *vpos + *direction;
+			
+				*vpos = *vpos + *direction;
+			
 		}
 	}
 }
@@ -132,20 +156,26 @@ void CS_SEE_UP::Leave()
 /////////////////////////////////////////////////
 // CS_SEE_LEFT Impl
 /////////////////////////////////////////////////
-CS_SEE_LEFT::CS_SEE_LEFT()
+CS_SEE_LEFT::CS_SEE_LEFT(int im)
 {
 
 	pAni = new Animation;
 	for (int i = 0; i < 2; i++)
 	{
+
+
+		std::wostringstream oss;
+		oss << std::setw(2) << std::setfill(L'0') << im << _T(".bmp");
+
+
 		Image* pImg = new Image;
-		pImg->Load(_T("001.bmp"), Rect(32*i , 32*SEE_LEFT , 32 + 32 *i , 32 + 32*SEE_LEFT));
+		pImg->Load(oss.str().c_str(), Rect(32 * i, 32 * SEE_LEFT, 32 + 32 * i, 32 + 32 * SEE_LEFT));
 		pImg->SetTransparent(RGB(0,0,0));
 
 		pAni->AddShot(pImg);
 	}
 	pAni->SetLoop(true);
-	pAni->SetDelay(60);
+	pAni->SetDelay(100);
 }
 CS_SEE_LEFT::~CS_SEE_LEFT()
 {
@@ -166,14 +196,24 @@ void CS_SEE_LEFT::Update(DWORD tick)
 	if (pAni)
 		pAni->Update(tick);
 
+	if (chp <= 0){
+		m_pMachine->transition(SEE_DIE);
+
+	}
 
 	Vector diff = *vpos - *vDest;
 
-	if (diff == Vector())
+	if (diff == Vector()){
+		*direction = Vector();
+		*attack = true;
+		*hold = false;
 		return;
 
+	}
+
+
 	*direction = *vDest - *vpos;
-	*direction = direction->normalize() * 2;
+	*direction = direction->normalize() * (*spd);
 
 
 
@@ -184,8 +224,8 @@ void CS_SEE_LEFT::Update(DWORD tick)
 			m_pMachine->transition(SEE_RIGHT);
 		}
 		else{
-
-			*vpos = *vpos + *direction;
+				*vpos = *vpos + *direction;
+			
 		}
 
 
@@ -220,20 +260,26 @@ void CS_SEE_LEFT::Leave()
 /////////////////////////////////////////////////
 // CS_SEE_RIGHT Impl
 /////////////////////////////////////////////////
-CS_SEE_RIGHT::CS_SEE_RIGHT()
+CS_SEE_RIGHT::CS_SEE_RIGHT(int im)
 {
 
 	pAni = new Animation;
 	for (int i = 0; i < 2; i++)
 	{
+
+
+		std::wostringstream oss;
+		oss << std::setw(2) << std::setfill(L'0') << im << _T(".bmp");
+
+
 		Image* pImg = new Image;      // enum 자기숫자 (UP은 0)   
-		pImg->Load(_T("001.bmp"), Rect(32 * i, 32 * SEE_RIGHT, 32 + 32 * i, 32 + 32 * SEE_RIGHT));
+		pImg->Load(oss.str().c_str(), Rect(32 * i, 32 * SEE_RIGHT, 32 + 32 * i, 32 + 32 * SEE_RIGHT));
 		pImg->SetTransparent(RGB(0, 0, 0));
 
 		pAni->AddShot(pImg);
 	}
 	pAni->SetLoop(true);
-	pAni->SetDelay(60);
+	pAni->SetDelay(100);
 }
 CS_SEE_RIGHT::~CS_SEE_RIGHT()
 {
@@ -254,19 +300,33 @@ void CS_SEE_RIGHT::Update(DWORD tick)
 {
 	if (pAni)
 		pAni->Update(tick);
+
+	if (chp <= 0){
+		m_pMachine->transition(SEE_DIE);
+
+	}
+
 	Vector diff = *vpos - *vDest;
 
-	if (diff == Vector())
+
+	if (diff == Vector()){
+		*direction = Vector();
+		*attack = true;
+		*hold = false;
 		return;
 
+	}
+
+
 	*direction = *vDest - *vpos;
-	*direction = direction->normalize() * 2;
+	*direction = direction->normalize() * (*spd);
 
 	if (abs(direction->x) >= abs(direction->y)){
 		//오른쪽왼쪽
 		if (direction->x >= 0){
-
-			*vpos = *vpos + *direction;
+			
+				*vpos = *vpos + *direction;
+			
 		}
 		else{
 
@@ -309,7 +369,7 @@ void CS_SEE_RIGHT::Leave()
 /////////////////////////////////////////////////
 // CS_SEE_DOWN Impl
 /////////////////////////////////////////////////
-CS_SEE_DOWN::CS_SEE_DOWN()
+CS_SEE_DOWN::CS_SEE_DOWN(int im)
 {
 	//이부분에서 그림을 받아올건데
 	//일단은 기본동작인 IDLE 상태를 하나 더 받고 거기에다가 전부다 이미지를 가지고있어야됨
@@ -319,14 +379,22 @@ CS_SEE_DOWN::CS_SEE_DOWN()
 	pAni = new Animation;
 	for (int i = 0; i < 2; i++)
 	{
+		
+
+
+		std::wostringstream oss;
+		oss << std::setw(2) << std::setfill(L'0') << im << _T(".bmp");
+
+		
+
 		Image* pImg = new Image;      // enum 자기숫자 (UP은 0)   
-		pImg->Load(_T("001.bmp"), Rect(32 * i, 32 * SEE_DOWN, 32 + 32 * i, 32 + 32 * SEE_DOWN));
+		pImg->Load(oss.str().c_str(), Rect(32 * i, 32 * SEE_DOWN, 32 + 32 * i, 32 + 32 * SEE_DOWN));
 		pImg->SetTransparent(RGB(0, 0, 0));
 
 		pAni->AddShot(pImg);
 	}
 	pAni->SetLoop(true);
-	pAni->SetDelay(60);
+	pAni->SetDelay(100);
 }
 CS_SEE_DOWN::~CS_SEE_DOWN()
 {
@@ -349,13 +417,25 @@ void CS_SEE_DOWN::Update(DWORD tick)
 	if (pAni)
 		pAni->Update(tick);
 
+	if (chp <= 0){
+		m_pMachine->transition(SEE_DIE);
+
+	}
+
 	Vector diff = *vpos - *vDest;
 
-	if (diff == Vector())
+
+	if (diff == Vector()){
+		*direction = Vector();
+		*attack = true;
+		*hold = false;
 		return;
 
+	}
+
+
 	*direction = *vDest - *vpos;
-	*direction = direction->normalize() * 2;
+	*direction = direction->normalize() * (*spd);
 
 	if (abs(direction->x) >= abs(direction->y)){
 		//오른쪽왼쪽
@@ -373,9 +453,8 @@ void CS_SEE_DOWN::Update(DWORD tick)
 	else{
 		if (direction->y >= 0){
 
-
-			*vpos = *vpos + *direction;
-
+				*vpos = *vpos + *direction;
+			
 		}
 		else{
 
@@ -403,20 +482,25 @@ void CS_SEE_DOWN::Leave()
 /////////////////////////////////////////////////
 // CS_ACTION Impl
 /////////////////////////////////////////////////
-CS_ACTION::CS_ACTION()
+CS_ACTION::CS_ACTION(int im)
 {
 
 	pAni = new Animation;
 	for (int i = 0; i < 2; i++)
 	{
+
+
+		std::wostringstream oss;
+		oss << std::setw(2) << std::setfill(L'0') << im << _T(".bmp");
+
 		Image* pImg = new Image;      // enum 자기숫자 (UP은 0)   
-		pImg->Load(_T("001.bmp"), Rect(32 * i, 32 * SEE_ACTION, 32 + 32 * i, 32 + 32 * SEE_ACTION));
+		pImg->Load(oss.str().c_str(), Rect(32 * i, 32 * SEE_ACTION, 32 + 32 * i, 32 + 32 * SEE_ACTION));
 		pImg->SetTransparent(RGB(0, 0, 0));
 
 		pAni->AddShot(pImg);
 	}
 
-	pAni->SetDelay(60);
+	pAni->SetDelay(100);
 }
 CS_ACTION::~CS_ACTION()
 {
@@ -455,20 +539,28 @@ void CS_ACTION::Leave()
 /////////////////////////////////////////////////
 // CS_DIE Impl
 /////////////////////////////////////////////////
-CS_DIE::CS_DIE()
+CS_DIE::CS_DIE(int im)
 {
 
 	pAni = new Animation;
 	for (int i = 0; i < 2; i++)
 	{
+
+
+		std::wostringstream oss;
+		oss << std::setw(2) << std::setfill(L'0') << im << _T(".bmp");
+
+		
+
 		Image* pImg = new Image;      // enum 자기숫자 (UP은 0)   
-		pImg->Load(_T("001.bmp"), Rect(32 * i, 32 * SEE_DIE, 32 + 32 * i, 32 + 32 * SEE_DIE));
+		pImg->Load(oss.str().c_str(), Rect(32 * i, 32 * SEE_DIE, 32 + 32 * i, 32 + 32 * SEE_DIE));
 		pImg->SetTransparent(RGB(0, 0, 0));
 
 		pAni->AddShot(pImg);
 	}
 
-	pAni->SetDelay(60);
+	pAni->SetLoop(true);
+	pAni->SetDelay(100);
 }
 CS_DIE::~CS_DIE()
 {
@@ -487,6 +579,13 @@ void CS_DIE::Update(DWORD tick)
 {
 	if (pAni)
 		pAni->Update(tick);
+
+	die_count += tick;
+
+	if (die_count > 20){
+
+		*the_end = true;
+	}
 }
 void CS_DIE::Draw(HDC hdc)
 {
@@ -505,7 +604,7 @@ void CS_DIE::Leave()
 /////////////////////////////////////////////////
 // CS_STATE Impl
 /////////////////////////////////////////////////
-CS_STATE::CS_STATE()
+CS_STATE::CS_STATE(int im)
 {
 	//이부분에서 그림을 받아올건데
 	//일단은 기본동작인 IDLE 상태를 하나 더 받고 거기에다가 전부다 이미지를 가지고있어야됨
@@ -515,14 +614,19 @@ CS_STATE::CS_STATE()
 	pAni = new Animation;
 	for (int i = 0; i < 2; i++)
 	{
+
+
+		std::wostringstream oss;
+		oss << std::setw(2) << std::setfill(L'0') << im << _T(".bmp");
+
 		Image* pImg = new Image;      // enum 자기숫자 (UP은 0)   
-		pImg->Load(_T("001.bmp"), Rect(32 * i, 32 * SEE_DOWN, 32 + 32 * i, 32 + 32 * SEE_DOWN));
+		pImg->Load(oss.str().c_str(), Rect(32 * i, 32 * SEE_DOWN, 32 + 32 * i, 32 + 32 * SEE_DOWN));
 		pImg->SetTransparent(RGB(0, 0, 0));
 
 		pAni->AddShot(pImg);
 	}
 
-	pAni->SetDelay(60);
+	pAni->SetDelay(100);
 }
 CS_STATE::~CS_STATE()
 {
